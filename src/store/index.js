@@ -19,14 +19,15 @@ export const Store = types.model('Store', {
   loading: true,
   completeIndex: localStorage.getItem( `${encodeURIComponent(self.repo)}/completeIndex`) || 0
 })).views(self => ({
-  get dir(){
+  get dir() {
     return encodeURIComponent(self.repo)
   }
 })).actions(self => {
 
   const fetchCourse = flow(function* () {
-    const exist=self.pfs.existsSync(`${self.dir}/course.json`);
-    if(!exist){
+    try {
+      yield self.pfs.readFile(`${self.dir}/course.json`);
+    } catch (e) {
       yield git.clone({
         dir: self.dir,
         corsProxy: window._env_.GIT_CORS || 'https://cors.isomorphic-git.org',
@@ -35,17 +36,18 @@ export const Store = types.model('Store', {
         depth: 1
       });
     }
-    try {
-      let data = yield self.pfs.readFile(`${self.dir}/course.json`);
-      self.course = JSON.parse(data.toString());
-      self.course.preloadData();
-    } catch (e) {
-      message.error("配置文件不合法!",6);
-    }
+    let data = yield self.pfs.readFile(`${self.dir}/course.json`);
+    self.course = JSON.parse(data.toString());
+    self.course.preloadData();
     self.loading = false;
   });
 
   const updateCourse= flow(function* () {
+    try {
+      yield git.listFiles({dir: self.dir, ref: 'master'})
+    } catch (e) {
+      return
+    }
     let files = yield git.listFiles({dir: self.dir, ref: 'master'});
     let modified = false;
     if (files) {
@@ -69,6 +71,7 @@ export const Store = types.model('Store', {
         let data = yield self.pfs.readFile(`${self.dir}/course.json`);
         self.course = JSON.parse(data.toString());
         self.course.preloadData();
+        message.info("课程已同步");
       } catch (e) {
         message.error("配置文件不合法!",3);
       }
@@ -89,7 +92,7 @@ export const Store = types.model('Store', {
   });
 
   const initFs= flow(function* () {
-    yield pify(browserfs.configure)({fs: "LocalStorage", options: {}});
+    yield pify(browserfs.configure)({fs: "IndexedDB", options: {}});
     const fs=browserfs.BFSRequire('fs');
     self.bfs = fs;
     self.pfs = pify(fs);
