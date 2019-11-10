@@ -27,9 +27,10 @@ class Scenario extends Component {
     const store=this.props.store;
     const index=this.props.match.params.index;
     const current=store.course.scenarios[index];
-    if (current) {
-      if (current.created ===false)
+    if (current){
+      if(!current.creating){
         current.createContainer();
+      }
     }
   }
 
@@ -37,7 +38,7 @@ class Scenario extends Component {
     const store=this.props.store;
     const index=this.props.match.params.index;
     const current=store.course.scenarios[index];
-    if (current) {
+    if (current){
       current.createContainer();
     }
   }
@@ -51,7 +52,8 @@ class Scenario extends Component {
 
   setComplete() {
     const store=this.props.store;
-    if (this.props.match.params.index * 1 === store.completeIndex * 1) {
+    const index=this.props.match.params.index;
+    if (index * 1 === store.completeIndex * 1) {
       store.setCompleteIndex(this.props.match.params.index * 1 + 1);
     }
   }
@@ -85,7 +87,7 @@ class Scenario extends Component {
           loading:true
         });
         values["containerId"]=container_id;
-        values["imageFullName"]=`registry.cn-hangzhou.aliyuncs.com/envs/${values["imageFullName"]}`;
+        values["imageFullName"]=values["imageFullName"];
         let url=`http://envmaker.kfcoding.com/api/image/commit`;
         let response=await fetch(url, {
           headers: {'Content-Type': 'application/json'},
@@ -177,6 +179,7 @@ class Scenario extends Component {
                 step_index !== scenario.steps.length - 1 &&!compact&&
                 <div style={{textAlign: 'center', position: 'absolute', width: '100%'}}>
                   <Button type="primary" style={{margin:20}} onClick={() => {
+                    scenario.removeContainer();
                     scenario.setStepIndex(0);
                     if(edit){
                       this.props.history.push('/?edit=true' + window.location.hash);
@@ -232,6 +235,7 @@ class Scenario extends Component {
                 step_index === scenario.steps.length - 1 &&!compact&&
                 <Button type="primary" style={{margin:20,float: 'right'}} onClick={() => {
                   if(edit){
+                    scenario.removeContainer();
                     this.setComplete();
                     setTimeout(() => {
                       this.props.history.push('/' + window.location.hash);
@@ -240,6 +244,7 @@ class Scenario extends Component {
                   }
                   step.checkStep().then(data => {
                     if (data === true) {
+                      scenario.removeContainer();
                       this.setComplete();
                       setTimeout(() => {
                         this.props.history.push('/' + window.location.hash);
@@ -360,7 +365,7 @@ class Scenario extends Component {
                   </span>
                 }>
                   {
-                    getFieldDecorator('dockerServerHost',{initialValue: docker_endpoint})(
+                    getFieldDecorator('dockerServerHost',{initialValue: ""})(
                       <Input style={{minWidth:"240px"}} disabled/>
                     )
                   }
@@ -375,7 +380,7 @@ class Scenario extends Component {
                   </span>
                 }>
                   {
-                    getFieldDecorator('dockerServerVersion',{initialValue: docker_server_version})(
+                    getFieldDecorator('dockerServerVersion',{initialValue: ""})(
                       <Input style={{minWidth:"240px"}} disabled/>
                     )
                   }
@@ -393,7 +398,7 @@ class Scenario extends Component {
               <Row type="flex" justify="start" align="middle">
                 <Form.Item label={
                   <span>新镜像的名称&nbsp;
-                    <Tooltip title="将当前容器提交为新镜像，将自动添加前缀:registry.cn-hangzhou.aliyuncs.com/envs/">
+                    <Tooltip title="将当前容器提交为新镜像">
                       <Icon type="question-circle-o" />
                     </Tooltip>
                   </span>
@@ -405,7 +410,7 @@ class Scenario extends Component {
                         message: '请输入简称!'
                       }],
                     })
-                    (<Input style={{minWidth:"240px"}} placeholder={"registry.cn-hangzhou.aliyuncs.com/envs/"}/>)
+                    (<Input style={{minWidth:"240px"}} placeholder={""}/>)
                   }
                 </Form.Item>
               </Row>
