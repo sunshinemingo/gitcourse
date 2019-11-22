@@ -37,3 +37,5 @@ npm run start
 ```
 
 Now you can access the gitcourse on [localhost](http://127.0.0.1:3000).  
+
+If you have a general question about Gitcourse or some suggestions about Gitcourse we encourage you to post on our [slack workspace](https://app.slack.com/client/TPD8HAVMW/CPFELS1AA) . The maintainers and other community members are glad to talk with you.
